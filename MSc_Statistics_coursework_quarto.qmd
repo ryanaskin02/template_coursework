@@ -27,10 +27,10 @@ body{
 
 ```{r setup, include = FALSE, tidy=TRUE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+  collapse = FALSE,
+  comment = ""
 )
-include_solutions <- TRUE
+include_solutions <- FALSE
 ```
 ```{r setup2, include=FALSE, tidy=TRUE}
 require(rmarkdown)
@@ -41,28 +41,148 @@ require(kableExtra)
 
 This Rmarkdown document is intended to provide a basic template that you may use throughout the course, and to introduce you to basic functionality of the open-source bookdown R package for writing Rmarkdown documents [@xie2016bookdown].
 
-Please note:
+# Analysis of Palmer Penguins Dataset
 
-- Rmarkdown syntax for the title and document style;
-- bookdown syntax to label and reference equations;
-- bookdown syntax to referencing literate and provide a bib file;
-- kable syntax to build clean and clear tables that can be referenced;
-- Rmarkdown inline functions to collect and print all code used.
+In this section, I seek to recreate the analysis done on the Palmer Penguins in order to gain an understanding of the workflow associated with submitting assignments.
 
-# Sampling from the Cauchy distribution
+## Adding Code Blocks and removing unwanted warnings
 
-In this question we seek to generate samples from the standard Cauchy distribution, with pdf given by
-\begin{equation}
-  p(x) = \frac{1}{\pi (1 + x^2)}, \quad x \in \mathbb{R}.
-  (\#eq:1)
-\end{equation}
-The cdf associated with \@ref(eq:1) is given by
-\begin{equation}
+Firstly I will install the package and load the dataset. Note that this section of code is shown not hidden and it is not executed. 
+
+```{{r}}
+# install.packages("palmerpenguins") if you have not already
+# use :: to access data or functions from within a package 
+penguins <- palmerpenguins::penguins 
+```
+
+Often we will encounter warnings that are unwanted in the report. 
+
+```{r}
+library(palmerpenguins)
+```
+
+These can be suppressed.
+
+```{{r}}
+#| warning: false
+library(palmerpenguins)
+```
+
+
+```{r}
+#| warning: false
+library(palmerpenguins)
+```
+
+## To show or not show a code block
+
+Sometimes we want to show a code block, but do not want to execute it every time the file is rendered. This can be very common with installing packages for example
+
+```{{r}}
+install.packages("palmerpenguins")
+```
+
+```{r}
+#| eval: false
+install.packages("palmerpengins")
+```
+
+And other times we want to execute code and not show it. To do this use #| echo: false. This is common when including tables and plots. 
+
+```{{r}}
+#| echo: false
+plot(x = penguins$bill_length_mm, 
+     y = penguins$bill_depth_mm)
+```
+
+```{r}
+#| echo: false
+plot(x = penguins$bill_length_mm,
+y = penguins$bill_depth_mm)
+```
+
+## Multiple Outputs
+
+If there are multiple outputs in the same code block, they are often split up in the rendering. 
+```{r}
+mean(penguins$body_mass_g, na.rm = TRUE)
+median(penguins$body_mass_g, na.rm = TRUE)
+```
+
+To keep this from happening we can set _results_ to **hold**. 
+
+```{r}
+#| results: hold
+mean(penguins$body_mass_g, na.rm = TRUE)
+median(penguins$body_mass_g, na.rm = TRUE)
+```
+
+We now see that the output is included together. 
+
+## Motivating Example
+
+Are all species of penguin the same weight? 
+
+```{r echo=FALSE}
+plot(x = penguins$species, 
+     y = penguins$body_mass_g, 
+     ylab = "Body mass (g)", 
+     xlab = "Species",
+     col = c(6,3,4))
+abline(h = mean(penguins$body_mass_g,na.rm = TRUE), col = 2, lwd = 2)
+```
+
+
+### How many of each species do we have?
+
+```{r echo=FALSE}
+species_counts <- table(penguins$species)
+knitr::kable(species_counts, col.names = c("Species", "Count"))
+```
+
+### What information do we have on the linear model? 
+
+```{r echo =FALSE}
+# fit linear model
+mass_lm <- lm(formula = body_mass_g ~ 1 + species, penguins)
+
+# extract coefficients and standard errors
+mass_lm_coefficients <- summary(mass_lm)$coefficients[,1:2]
+mass_lm_coefficients
+```
+
+```{r message=FALSE}
+knitr::kable(x = mass_lm_coefficients)
+```
+
+We can set the row and column names to improve the table. 
+
+```{r message=FALSE, echo=FALSE}
+row.names(mass_lm_coefficients) <- c("Intercept", "Chinstrap", "Gentoo")
+knitr::kable(
+  x = mass_lm_coefficients,
+  col.names = c("MLE", "Std. Err"))
+```
+
+
+Finally, we really don't need to be showing all of those decimal places.
+
+```{r message=FALSE}
+knitr::kable(
+  x = round(mass_lm_coefficients, 2),
+  col.names = c("MLE", "Std. Err"))
+```
+
+$$
+p(x) = \frac{1}{\pi (1 + x^2)}, \quad x \in \mathbb{R}.
+$$ {#eq-one}
+
+The cdf associated with @eq-test is given by
+$$
   F(x) = \frac{1}{\pi}\arctan(x) + \frac{1}{2}.
-  (\#eq:2)
-\end{equation}
+$$ {#eq-two}
 
-**Part a.**  We apply the inversion method as described by @graham2013stochastic. We first compute the generalised inverse of the cdf \@ref(eq:2).  To this end, let $y\in [0,1]$, then
+**Part a.** We apply the inversion method as described by @graham2013stochastic. We first compute the generalised inverse of the cdf @eq-two.  To this end, let $y\in [0,1]$, then
 
 \begin{align}
     y &= F(x), \quad \iff (\#eq:3a) \\
